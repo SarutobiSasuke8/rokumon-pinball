@@ -6,11 +6,11 @@ The single source of truth for how the game is controlled. Update this before or
 
 | Action | Keyboard | Mouse / Touch | Gamepad (if supported) |
 |---|---|---|---|
-| Move | `TODO` | `TODO` | `TODO` |
-| Primary action | `TODO` | `TODO` | `TODO` |
-| Secondary action | `TODO` | `TODO` | `TODO` |
-| Pause / menu | `TODO` | `TODO` | `TODO` |
-| Restart | `TODO` | `TODO` | `TODO` |
+| Left flipper | `Left Arrow` / `Z` | Tap/hold left half of screen | not supported |
+| Right flipper | `Right Arrow` / `M` | Tap/hold right half of screen | not supported |
+| Launch ball | either flipper key/zone, while ball is waiting in the lane | either flipper zone, while ball is waiting in the lane | not supported |
+| Pause / menu | `Esc` (from Game Over only, returns to table select) | n/a | not supported |
+| Restart | `Space` (from Game Over) | tap anywhere (from Game Over) | not supported |
 
 ## Rules
 
@@ -21,5 +21,7 @@ The single source of truth for how the game is controlled. Update this before or
 
 ## Notes
 
-- Input model (polled / event-driven / hybrid): `TODO`
-- Dead zones, buffering, or coyote-time decisions: `TODO`
+- Input model: polled every frame (`src/systems/input.js`) — flipper state is read each `update()` tick, not event-driven, so held-key/held-touch behaviour is inherent.
+- There is deliberately no separate launch button. While the ball sits in the plunger lane (`status: "ready"`), pressing either flipper launches it — this keeps the touch control surface to exactly two zones (left half / right half) on mobile, with no third gesture to teach.
+- Touch zones are the left/right halves of the whole canvas, not small on-playfield buttons, so they stay easy to hit on a phone regardless of screen size.
+- No dead zones or input buffering yet — flipper angular motion is a simple proportional controller (see `src/game/flipper.js`), not a physical motor with acceleration curves.
