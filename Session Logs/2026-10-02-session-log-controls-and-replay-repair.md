@@ -5,7 +5,6 @@ created: 2026-10-02
 status: complete
 type: session-log
 mutability: append-only
-owner: "[[Alexei Udall]]"
 project: Rokumon Pinball
 agent: Codex
 tags:
@@ -62,3 +61,7 @@ This pass repairs the existing controls and replay loop. It leaves table content
 - `Templates/INPUT_CONTROL_MAP.md`
 - `Templates/PLAYTEST_CHECKLIST.md`
 - `docs/PROJECT_BRIEF.md`
+
+## CI Follow-up, 2026-10-02
+
+The first PR run passed gameplay tests/build but failed the contract job because this log's vault-only owner link violated the repository's portability contract. That metadata was removed. The unchanged template contract validator now passes locally; no validator or workflow requirement was relaxed.
