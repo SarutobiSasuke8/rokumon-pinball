@@ -223,6 +223,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(_time, delta) {
+    if (this.actions.restartPressed()) {
+      this.scene.stop("UI");
+      this.scene.restart({ tableId: this.tableId });
+      return;
+    }
+
     this.leftFlipper.setPressed(this.actions.leftFlipperDown());
     this.rightFlipper.setPressed(this.actions.rightFlipperDown());
     this.leftFlipper.update();
