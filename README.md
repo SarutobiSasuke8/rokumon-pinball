@@ -44,11 +44,10 @@ Vite prints a local address to open in a browser.
 | Right Arrow or M | Right flipper (also launches the ball while it waits in the lane). |
 | Touch or click, left half of the screen | Left flipper. |
 | Touch or click, right half of the screen | Right flipper. |
-| R | Restart. |
 | Space | Play the table from the select screen, or play again from the game-over screen. |
 | Esc | Return to table select from the game-over screen. |
 
-Known issue on this branch: flippers can stick after a release that crosses the two touch halves, and multi-touch holds are not independent. A fix is in open pull request #1 and is not part of `main`.
+Known issue on this branch: flippers can stick after a release that crosses the two touch halves, multi-touch holds are not independent, and the R restart key is defined but not yet hooked up. A fix is in open pull request #1 and is not part of `main`.
 
 ## How it works
 
