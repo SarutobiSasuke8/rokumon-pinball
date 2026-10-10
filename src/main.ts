@@ -12,6 +12,7 @@ const game = new Phaser.Game({
   width: GAME.width,
   height: GAME.height,
   backgroundColor: "#0b1020",
+  input: { activePointers: 2 },
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   physics: {
     default: "matter",

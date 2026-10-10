@@ -13,29 +13,35 @@ export function createActions(scene) {
     restart: "R",
   });
 
-  const pointerZones = { left: false, right: false };
+  // Track the half each pointer pressed, rather than where it is released.
+  const pointerZones = new Map();
   const width = scene.scale.width;
 
   scene.input.on("pointerdown", (pointer) => {
-    if (pointer.x < width / 2) pointerZones.left = true;
-    else pointerZones.right = true;
+    pointerZones.set(pointer.id, pointer.x < width / 2 ? "left" : "right");
   });
-  scene.input.on("pointerup", (pointer) => {
-    if (pointer.x < width / 2) pointerZones.left = false;
-    else pointerZones.right = false;
+  const release = (pointer) => pointerZones.delete(pointer.id);
+  scene.input.on("pointerup", release);
+  scene.input.on("pointerupoutside", release);
+  const clearPointers = () => { pointerZones.clear(); wasAnyDown = false; };
+  scene.game.events.on("blur", clearPointers);
+  scene.events.once("shutdown", () => {
+    clearPointers();
+    scene.game.events.off("blur", clearPointers);
   });
-  scene.input.on("pointerupoutside", () => {
-    pointerZones.left = false;
-    pointerZones.right = false;
-  });
+
+  const zoneDown = (zone) => {
+    for (const side of pointerZones.values()) if (side === zone) return true;
+    return false;
+  };
 
   let wasAnyDown = false;
 
   return {
-    leftFlipperDown: () => keys.left.isDown || keys.leftAlt.isDown || pointerZones.left,
-    rightFlipperDown: () => keys.right.isDown || keys.rightAlt.isDown || pointerZones.right,
+    leftFlipperDown: () => keys.left.isDown || keys.leftAlt.isDown || zoneDown("left"),
+    rightFlipperDown: () => keys.right.isDown || keys.rightAlt.isDown || zoneDown("right"),
     anyFlipperJustPressed: () => {
-      const down = keys.left.isDown || keys.leftAlt.isDown || keys.right.isDown || keys.rightAlt.isDown || pointerZones.left || pointerZones.right;
+      const down = keys.left.isDown || keys.leftAlt.isDown || keys.right.isDown || keys.rightAlt.isDown || pointerZones.size > 0;
       const justDown = down && !wasAnyDown;
       wasAnyDown = down;
       return justDown;

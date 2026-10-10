@@ -10,6 +10,7 @@ export class MenuScene extends Phaser.Scene {
   constructor() { super("Menu"); }
 
   create() {
+    this.firstOwnedId = null;
     this.save = loadSave();
     this.add.text(GAME.width / 2, 90, "ROKUMON PINBALL", {
       fontFamily: "serif", fontSize: "40px", color: "#ffe4b5",
