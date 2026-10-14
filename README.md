@@ -84,3 +84,11 @@ Known issue on this branch: flippers can stick after a release that crosses the 
 ## Licence
 
 See `LICENSE`.
+
+## Rokumon hub events
+
+The optional `/hub-bridge.js` SDK receives ready, bumper/target score and gameOver at the final drain with duration. Missing or broken SDK calls are no-ops. Static `dist/` assets use relative URLs.
+
+- `high-score`: tableId (string), score (number), seconds (number). Emitted only for a new saved table best at run end.
+
+Run `npm test` and `node scripts/hub-smoke.mjs` after building for forwarding, final drain and standalone coverage.

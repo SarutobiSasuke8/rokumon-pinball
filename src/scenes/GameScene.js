@@ -49,6 +49,7 @@ export class GameScene extends Phaser.Scene {
 
     this.scene.launch("UI", { tableName: this.table.name });
     hub.ready();
+    hub.score(0);
     installDebug(this, () => snapshotRun(this.state));
   }
 
@@ -206,7 +207,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   handleDrain() {
-    if (this.state.status === "ready") return; // ball settling at rest, not a real drain
+    if (this.state.status === "ready" || this.state.status === "gameover") return; // settling or terminal, not a new drain
     const status = loseBall(this.state);
     this.game.events.emit("balls-changed", this.state.ballsRemaining);
     this.matter.body.setPosition(this.ball, { x: PLUNGER.laneX, y: PLUNGER.restY });
@@ -215,7 +216,8 @@ export class GameScene extends Phaser.Scene {
     if (status === "gameover") {
       const isHighScore = recordHighScore(this.save, this.tableId, this.state.score);
       this.scene.stop("UI");
-      hub.gameOver(this.state.score);
+      hub.gameOver(this.state.score, Math.round(this.state.elapsedMs));
+      if (isHighScore) hub.event("high-score", { tableId: this.tableId, score: this.state.score, seconds: Math.round(this.state.elapsedMs / 1000) });
       this.scene.start("GameOver", { score: this.state.score, tableId: this.tableId, isHighScore });
     } else {
       this.state.status = "ready";
