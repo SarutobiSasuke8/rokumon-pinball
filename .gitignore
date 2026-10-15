@@ -9,6 +9,10 @@ build/
 .next/
 out/
 
+# Playwright output
+test-results/
+playwright-report/
+
 # Logs
 *.log
 npm-debug.log*
