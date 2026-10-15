@@ -15,7 +15,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm install
-      - run: npm run verify
       - run: npx playwright install --with-deps chromium
+      - run: npm run verify
       - run: node scripts/hub-smoke.mjs
       - run: npm run test:mobile

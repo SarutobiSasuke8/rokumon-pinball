@@ -94,3 +94,7 @@ The optional `/hub-bridge.js` SDK receives ready, bumper/target score and gameOv
 - `high-score`: tableId (string), score (number), seconds (number). Emitted only for a new saved table best at run end.
 
 Run `npm test` and `node scripts/hub-smoke.mjs` after building for forwarding, final drain and standalone coverage.
+
+## Repeatable boot smoke
+
+Run `npm ci`, then `npx playwright install chromium` once. `npm test` runs the existing control/SDK checks, builds the game and boots it in headless Chromium. It checks rendered menu/table frames, keyboard start and launch, and refuses console errors, page exceptions and failed requests. `node scripts/boot-smoke.mjs --playtest` adds alternating flipper input and an Escape check. See [dated findings](docs/playability.md); the test does not certify physical touch or physics feel.
