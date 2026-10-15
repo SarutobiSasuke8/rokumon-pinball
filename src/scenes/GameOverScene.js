@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import { GAME } from "../game/constants.js";
 
+const LONG_TAP_MS = 500;
+
 export class GameOverScene extends Phaser.Scene {
   constructor() { super("GameOver"); }
 
@@ -36,6 +38,18 @@ export class GameOverScene extends Phaser.Scene {
     const toMenu = () => this.scene.start("Menu");
     this.input.keyboard.once("keydown-SPACE", replay);
     this.input.keyboard.once("keydown-ESC", toMenu);
-    this.input.once("pointerdown", replay);
+    // Touch: a short tap replays, a long tap (as the prompt says) goes back to
+    // table select. Decide on release, so the hold length is known. Only a
+    // press that starts on this screen counts, so a finger still held on a
+    // flipper when the last ball drains cannot trigger anything.
+    let pressedAt = null;
+    this.input.on("pointerdown", () => { pressedAt ??= this.time.now; });
+    this.input.on("pointerup", () => {
+      if (pressedAt === null) return;
+      const held = this.time.now - pressedAt;
+      pressedAt = null;
+      if (held >= LONG_TAP_MS) toMenu();
+      else replay();
+    });
   }
 }
