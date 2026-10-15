@@ -28,6 +28,7 @@ Vite prints a local address to open in a browser.
 | `npm run build` | Type checks with `tsc --noEmit`, then builds with Vite into `dist/`. |
 | `npm run preview` | Serves the built `dist/` folder locally. |
 | `npm run verify` | Runs the same checks as `build`. This is what CI runs. |
+| `npm run test:mobile` | Runs the Playwright mobile touch tests against the built `dist/` (run `npm run build` first). See `docs/mobile-test-plan.md`. |
 
 ## How to play
 
@@ -46,8 +47,9 @@ Vite prints a local address to open in a browser.
 | Touch or click, right half of the screen | Right flipper. |
 | Space | Play the table from the select screen, or play again from the game-over screen. |
 | Esc | Return to table select from the game-over screen. |
+| Tap / long tap (half a second) on the game-over screen | Play again / return to table select. |
 
-Known issue on this branch: flippers can stick after a release that crosses the two touch halves, multi-touch holds are not independent, and the R restart key is defined but not yet hooked up. A fix is in open pull request #1 and is not part of `main`.
+Cross-half releases, independent two-thumb holds and the R restart key were fixed in pull request #1. The touch behaviour is covered by the mobile touch tests in `tests/mobile/`.
 
 ## How it works
 
