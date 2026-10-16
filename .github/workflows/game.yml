@@ -17,5 +17,12 @@ jobs:
       - run: npm install
       - run: npx playwright install --with-deps chromium
       - run: npm run verify
+      - name: Build itch.io zip (index.html at zip root, size and file count)
+        run: npm run build:itch
+      - uses: actions/upload-artifact@v4
+        with:
+          name: itch-zip
+          path: itch/*.zip
+          retention-days: 7
       - run: node scripts/hub-smoke.mjs
       - run: npm run test:mobile

@@ -31,3 +31,7 @@ Thumbs.db
 .vscode/
 .idea/
 
+
+# itch.io build (npm run build:itch)
+dist-itch/
+itch/
