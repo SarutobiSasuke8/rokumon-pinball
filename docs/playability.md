@@ -4,7 +4,7 @@ Browser-driven pass on the built game in headless Chromium, 1280×900. This is l
 
 ## Findings
 
-1. **P2: no keyboard pause during a run.** Start Dragon's Lair with Space, launch with either arrow and press Escape. The Game scene remains active and unpaused while the ball keeps moving. A player cannot safely stop to read the screen. `boot-smoke.mjs --playtest` records `paused: false` before and after Escape. Pause/settings belong in a later gameplay ticket.
+1. **P2: no keyboard pause during a run.** Start Dragon's Lair with Space, launch with either arrow and press Escape. The Game scene remains active and unpaused while the ball keeps moving. A player cannot safely stop to read the screen. `boot-smoke.mjs --playtest` records `paused: false` before and after Escape. Pause/settings belong in a later gameplay ticket. *Update, 16 October 2026: the b6-10 beta polish adds pause. Esc or P toggles it, hiding the tab or blurring the window pauses a ball in play, and a tap or Esc resumes; `--playtest` now records `paused: true` after Escape. Settings are still open.*
 2. **P3: the waiting ball overlaps the balls counter.** Immediately after starting, the plunger ball sits over the bottom-right `Balls: 3` label. It makes the counter harder to read until launch. See `../tests/evidence/2026-10-15-boot/table.png`. HUD and lane placement need a separate review.
 3. **Rough edge: little on-table input guidance.** The live table has its title and counters but no visible launch/flipper hints. The README explains that either flipper launches. First-time players may need to leave the screen to discover that. This pass verified keyboard input; real touch discoverability remains untested.
 

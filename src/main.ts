@@ -24,4 +24,7 @@ const game = new Phaser.Game({
   scene: [BootScene, MenuScene, GameScene, UIScene, GameOverScene],
 });
 
+// index.html shows a loading line while the bundle downloads; drop it once Phaser is up.
+game.events.once("ready", () => document.getElementById("boot-loading")?.remove());
+
 if (import.meta.env.DEV) (window as unknown as { __game: Phaser.Game }).__game = game;
