@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { UI, at, activeScenes, flippers, runState, forceGameOver, HUB_STUB } from "./helpers";
+import { UI, at, activeScenes, flippers, runState, forceGameOver, waitForGameOverReady, HUB_STUB } from "./helpers";
 
 // Desktop viewports: keyboard and mouse, plus the Rokumon hub events.
 
@@ -91,15 +91,15 @@ test("Esc pauses, the pause menu can be clicked, and P resumes", async ({ page }
 });
 
 test("game over: Space plays again and Esc goes to the title", async ({ page }) => {
+  test.setTimeout(90_000);
   await start(page);
   await forceGameOver(page, 2500);
-  await expect.poll(() => activeScenes(page)).toContain("GameOver");
-  await page.waitForTimeout(800);
+  await waitForGameOverReady(page);
   await page.keyboard.press("Space");
   await expect.poll(() => activeScenes(page)).toContain("Game");
+  await expect.poll(async () => (await runState(page)).status).toBe("ready");
   await forceGameOver(page, 100);
-  await expect.poll(() => activeScenes(page)).toContain("GameOver");
-  await page.waitForTimeout(800);
+  await waitForGameOverReady(page);
   await page.keyboard.press("Escape");
   await expect.poll(() => activeScenes(page)).toEqual(["Menu"]);
 });

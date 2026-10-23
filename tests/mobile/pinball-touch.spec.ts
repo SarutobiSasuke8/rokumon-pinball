@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { NATIVE_EVENT_COUNTER, Touchscreen } from "./touch";
-import { UI, at, activeScenes, flippers, runState, forceGameOver } from "./helpers";
+import { UI, at, activeScenes, flippers, runState, forceGameOver, waitForGameOverReady } from "./helpers";
 
 // Phone viewports, driven by real touch events only.
 
@@ -126,9 +126,10 @@ test("a swipe across the centre releases the flipper it started on and does not 
 });
 
 test("touch play scores points and the score display shows them", async ({ page }) => {
+  test.setTimeout(60_000);
   await startTableByTouch(page);
   await launchByTouch(page);
-  const deadline = Date.now() + 15_000;
+  const deadline = Date.now() + 40_000;
   let score = 0;
   for (let round = 0; Date.now() < deadline && score === 0; round += 1) {
     await tap(page, round % 2 ? UI.leftHalf : UI.rightHalf);
@@ -160,10 +161,10 @@ test("touches on the score strip do not flip or launch", async ({ page }) => {
 });
 
 test("game over: PLAY AGAIN replays the table", async ({ page }) => {
+  test.setTimeout(60_000);
   await startTableByTouch(page);
   await forceGameOver(page, 4321);
-  await expect.poll(() => activeScenes(page)).toContain("GameOver");
-  await page.waitForTimeout(800);
+  await waitForGameOverReady(page);
   await tap(page, UI.playAgain);
   await expect.poll(() => activeScenes(page)).toContain("Game");
   expect(await activeScenes(page)).not.toContain("GameOver");
@@ -171,10 +172,10 @@ test("game over: PLAY AGAIN replays the table", async ({ page }) => {
 });
 
 test("game over: TITLE SCREEN returns to the title with the new high score listed", async ({ page }) => {
+  test.setTimeout(60_000);
   await startTableByTouch(page);
   await forceGameOver(page, 4321);
-  await expect.poll(() => activeScenes(page)).toContain("GameOver");
-  await page.waitForTimeout(800);
+  await waitForGameOverReady(page);
   await tap(page, UI.titleScreen);
   await expect.poll(() => activeScenes(page)).toEqual(["Menu"]);
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("rokumon-pinball:save:v1") ?? "{}"));

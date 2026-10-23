@@ -52,6 +52,15 @@ export async function forceGameOver(page: Page, score = 0) {
   }, score);
 }
 
+// The game-over screen arrives after a short hold on game time, then ignores
+// input briefly. CI renders slowly, so wait on the game, not the wall clock.
+export async function waitForGameOverReady(page: Page) {
+  await page.waitForFunction(() => {
+    const scene = window.__GAME_DEBUG__?.getScene().scene.get("GameOver");
+    return Boolean(scene?.sys.isActive() && scene.ready());
+  }, undefined, { timeout: 30_000 });
+}
+
 export const HUB_STUB =
   "window.hubCalls=[]; window.Hub=Object.fromEntries(['ready','score','gameOver','event'].map(name=>[name,(...args)=>window.hubCalls.push({name,args})]));";
 
