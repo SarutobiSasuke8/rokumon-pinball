@@ -6,7 +6,7 @@ It is part of the Rokumon Games family of small browser games.
 
 ## Status
 
-First playable vertical slice. The core loop works end to end: launch the ball, keep it alive with the flippers, score off bumpers and targets, lose the ball down the drain, and see the game-over screen with your saved high score. The TypeScript and Vite build passes. A human feel pass on desktop and on a physical phone is still outstanding, so treat the physics tuning as provisional. There is no hosted deployment.
+Version 0.2.0, the overhaul after the 23 October 2026 playtest (issue #10). The table now has its own physics, a full code-drawn look, synthesised sound, a title screen, how-to-play, pause menu and a game-over and high-score flow. Automated tests cover physics, scoring, input and browser flows on desktop and phone viewports. A human feel pass on desktop and on a physical phone is still the gate before relisting. There is no hosted deployment from this repo.
 
 ## Play money only
 
@@ -28,51 +28,56 @@ Vite prints a local address to open in a browser.
 | `npm run build` | Type checks with `tsc --noEmit`, then builds with Vite into `dist/`. |
 | `npm run preview` | Serves the built `dist/` folder locally. |
 | `npm run verify` | Runs the same checks as `build`. This is what CI runs. |
-| `npm run test:mobile` | Runs the Playwright mobile touch tests against the built `dist/` (run `npm run build` first). See `docs/mobile-test-plan.md`. |
+| `npm test` | Input, physics, scoring and hub checks, then a build and a headless boot smoke. |
+| `npm run test:mobile` | Runs the Playwright tests against the built `dist/` (run `npm run build` first): touch on four phone viewports, keyboard, mouse and hub events on two desktop viewports. One worker. See `docs/mobile-test-plan.md`. |
 
 ## How to play
 
-- Pick the Dragon's Lair card on the table-select screen (click, tap or press Space).
-- The ball waits in the plunger lane on the right. There is no separate launch button: pressing either flipper while the ball is waiting launches it.
-- Keep the ball in play with the flippers and score off the 3 bumpers and 2 standup targets.
-- You get 3 balls per game. When the last one drains, the game-over screen shows your score and your best score for that table.
+- Press PLAY on the title screen (tap, click, Space or Enter). HOW TO PLAY explains everything in the game.
+- The ball waits in the shooter lane on the right. Hold to pull the plunger and let go to launch. A longer hold gives a stronger plunge.
+- Keep the ball out of the drain with the flippers. You get 3 balls per game.
+- Scoring: pop bumpers (dragon eggs) 100, slingshots 10. Roll through all four L-A-I-R top lanes for 2,000 and a higher multiplier (up to 5x); flipping moves the lit lanes. After a plunge one lane blinks: roll through it first for a 5,000 skill shot. Hit the three gems on the right to wake the dragon, then shoot the Mouth on the left for the 25,000 jackpot (1,000 when the dragon sleeps). Points are multiplied by the multiplier.
+- Saves: a ball that drains in its first 8 seconds comes back once. The Breath kickback in the left outlane starts lit and saves one drain; waking the dragon relights it.
+- At game over you see your score, whether it is a new high score, and the top five scores for the table.
 
 ## Controls
 
 | Input | Action |
 | --- | --- |
-| Left Arrow or Z | Left flipper (also launches the ball while it waits in the lane). |
-| Right Arrow or M | Right flipper (also launches the ball while it waits in the lane). |
-| Touch or click, left half of the screen | Left flipper. |
-| Touch or click, right half of the screen | Right flipper. |
-| Space | Play the table from the select screen, or play again from the game-over screen. |
-| Esc | Return to table select from the game-over screen. |
-| Tap / long tap (half a second) on the game-over screen | Play again / return to table select. |
-
-Cross-half releases, independent two-thumb holds and the R restart key were fixed in pull request #1. The touch behaviour is covered by the mobile touch tests in `tests/mobile/`.
+| Left Arrow, Z or Left Shift | Left flipper. |
+| Right Arrow, M or Right Shift | Right flipper. |
+| Space, Down Arrow or Enter (hold, then let go) | Pull and release the plunger. Any flipper key also works while the ball waits. |
+| Touch or click, left half of the table | Left flipper. |
+| Touch or click, right half of the table | Right flipper. |
+| Touch and hold anywhere while the ball waits | Pull the plunger; let go to launch. |
+| Esc or P, or the II button at the top right | Pause menu: resume, how to play, sound, restart, quit to title. Hiding the tab also pauses. |
+| R | Restart the current game. |
+| Title screen: Space or Enter, H, S | Play, how to play, sound on or off. |
+| Game over: Space or Enter, Esc, or the buttons | Play again, title screen. |
 
 ## How it works
 
-- The table is a portrait 600 by 1000 canvas, scaled to fit the window.
-- Physics is Phaser's Matter integration, with two hinged flippers, bumpers, standup targets and a shooter lane.
-- A code-driven redirect curves the launched ball out of the lane into the playfield, because the physical ramp alone gave an unreliable kick. The reasoning is recorded in `Templates/GAMEPLAY_CONSTANTS.md`.
-- Keyboard and touch share one input contract in `src/systems/input.js`.
-- High scores and the table ownership map are saved in the browser's `localStorage` (schema v1). There is no server and no account.
-- Table definitions are in `src/game/tables.js`, and tuning values are in `src/game/constants.js`.
-- A small `postMessage` bridge in `src/integrations/hub.js` can report ready, score and game-over events to a host page. No hub is wired up yet.
+- The game is a portrait 600 by 1000 canvas, scaled to fit the window. The top 96 pixels are the dot-matrix score display and pause button; the table never draws under them.
+- Physics is the game's own fixed-step simulation in `src/game/physics.js` (480 steps a second): capsule walls, kinematic flippers that pass their surface speed to the ball, kicking bumpers and slingshots, a one-way lane gate, a saucer and a kickback. It has no Phaser imports, so it is tested in Node. Table geometry is in `src/game/layout.js`; tuning values are in `src/game/constants.js`.
+- Scoring rules are pure functions in `src/game/rules.js`.
+- Keyboard and touch share one input contract in `src/systems/input.js`. Taps shorter than a frame still flip.
+- All art is drawn in code at boot (`src/art/textures.js`). All sound is synthesised at runtime with the Web Audio API (`src/systems/audio.js`). There are no image or audio files and no third-party assets.
+- High scores, the top-five list and the sound setting are saved in the browser's `localStorage` (schema v1; older saves keep their best score). There is no server and no account.
+- A small bridge in `src/integrations/hub.js` reports ready, score and game-over events to the Rokumon Games hub when its SDK is present.
 
 ## Tech
 
-- [Phaser](https://phaser.io/) 4 with Matter physics
+- [Phaser](https://phaser.io/) 4 for rendering, input and scenes; custom physics
 - Vite 8 and TypeScript for the entry point and type checking. Most game modules are plain JavaScript.
-- No test framework is configured.
+- Tests: plain Node scripts (`scripts/test-*.mjs`) and Playwright (`tests/mobile/`).
 
 ## Project layout
 
 - `src/main.ts`: Phaser game setup and scene list.
-- `src/scenes/`: boot, table-select menu, game, HUD and game-over scenes.
-- `src/game/`: constants, table definitions, flipper logic, save data and run state.
-- `src/systems/`: input and debug helpers.
+- `src/scenes/`: boot, title, how-to-play, game, HUD and pause, and game-over scenes.
+- `src/game/`: constants, table layout, physics, rules, table catalogue, save data and run state.
+- `src/art/`, `src/ui/`: code-drawn textures, the dot-matrix display and UI widgets.
+- `src/systems/`: input, audio and debug helpers.
 - `src/ui/`: HUD housing helper.
 - `docs/`, `Templates/`, `personas/`, `profiles/`, `addons/`, `Session Logs/`, `AGENTS.md` and the other agent files: the working agreement and notes from the browser game template this project started from. See `TEMPLATE_NOTES.md`.
 - `ROADMAP.md` and `TODO.md`: open work.
@@ -80,7 +85,7 @@ Cross-half releases, independent two-thumb holds and the R restart key were fixe
 ## Open work
 
 - A human playtest on desktop and phone.
-- Build the two locked tables as real, playable scenes.
+- Build the two locked tables as real, playable scenes (not part of the 0.2.0 overhaul).
 - Decide whether and when to join the Rokumon Games hub.
 
 ## Licence
@@ -89,7 +94,7 @@ See `LICENSE`.
 
 ## Rokumon hub events
 
-The optional `/hub-bridge.js` SDK receives ready, bumper/target score and gameOver at the final drain with duration. Missing or broken SDK calls are no-ops. Static `dist/` assets use relative URLs.
+The optional `/hub-bridge.js` SDK receives ready when a game starts, score on every score change, and gameOver at the final drain with the score and play duration in milliseconds (unchanged in 0.2.0). Missing or broken SDK calls are no-ops. Static `dist/` assets use relative URLs.
 
 - `high-score`: tableId (string), score (number), seconds (number). Emitted only for a new saved table best at run end.
 
@@ -98,3 +103,7 @@ Run `npm test` and `node scripts/hub-smoke.mjs` after building for forwarding, f
 ## Repeatable boot smoke
 
 Run `npm ci`, then `npx playwright install chromium` once. `npm test` runs the existing control/SDK checks, builds the game and boots it in headless Chromium. It checks rendered menu/table frames, keyboard start and launch, and refuses console errors, page exceptions and failed requests. `node scripts/boot-smoke.mjs --playtest` adds alternating flipper input and an Escape check. See [dated findings](docs/playability.md); the test does not certify physical touch or physics feel.
+
+## Credits
+
+Code, table art and sound effects: Rokumon Games. All art is drawn in code and all sound is synthesised in code at runtime; the game ships no third-party or licensed assets. Fonts are the player's system fonts (Georgia, Trebuchet MS or fallbacks).

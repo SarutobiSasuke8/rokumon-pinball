@@ -1,13 +1,13 @@
 {
   "name": "rokumon-pinball",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "node scripts/test-controls.mjs && node scripts/test-hub.mjs && npm run build && node scripts/boot-smoke.mjs",
+    "test": "node scripts/test-controls.mjs && node scripts/test-physics.mjs && node scripts/test-rules.mjs && node scripts/test-hub.mjs && npm run build && node scripts/boot-smoke.mjs",
     "verify": "npm test && npm run build",
     "test:mobile": "playwright test",
     "build:itch": "vite build --mode itch --outDir dist-itch --emptyOutDir && node scripts/itch-zip.mjs"
