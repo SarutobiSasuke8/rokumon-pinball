@@ -1,22 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
 import { NATIVE_EVENT_COUNTER, Touchscreen } from "./touch";
+import { UI, at, activeScenes, flippers, runState, forceGameOver, waitForGameOverReady } from "./helpers";
 
-// Game-space constants from src/game/constants.js (600 x 1000 portrait table).
-const GAME_W = 600;
-const GAME_H = 1000;
-const LEFT_HALF = { x: 150, y: 850 };
-const RIGHT_HALF = { x: 450, y: 850 };
-const TABLE_CARD = { x: 300, y: 220 };
+// Phone viewports, driven by real touch events only.
 
 let errors: string[] = [];
 let touch: Touchscreen;
-
-// Convert a point in game space to a viewport point on the scaled canvas.
-async function at(page: Page, point: { x: number; y: number }) {
-  const box = await page.locator("canvas").boundingBox();
-  if (!box) throw new Error("canvas has no layout box");
-  return { x: box.x + (point.x / GAME_W) * box.width, y: box.y + (point.y / GAME_H) * box.height };
-}
 
 async function down(page: Page, id: number, point: { x: number; y: number }) {
   const p = await at(page, point);
@@ -28,26 +17,15 @@ async function tap(page: Page, point: { x: number; y: number }) {
   await touch.tap(p.x, p.y);
 }
 
-const activeScenes = (page: Page) =>
-  page.evaluate(() => {
-    const game = window.__GAME_DEBUG__?.getScene().game;
-    return game ? game.scene.getScenes(true).map((scene: { scene: { key: string } }) => scene.scene.key) : [];
-  });
-
-const flippers = (page: Page) =>
-  page.evaluate(() => {
-    const scene = window.__GAME_DEBUG__.getScene();
-    const read = (flipper: { pressed: boolean; body: { angle: number }; restAngle: number; activeAngle: number }) => ({
-      pressed: flipper.pressed,
-      raised: Math.abs(flipper.body.angle - flipper.activeAngle) < Math.abs(flipper.body.angle - flipper.restAngle),
-    });
-    return { left: read(scene.leftFlipper), right: read(scene.rightFlipper), status: scene.state.status as string };
-  });
-
 async function startTableByTouch(page: Page) {
-  await tap(page, TABLE_CARD);
+  await tap(page, UI.play);
   await page.waitForFunction(() => Boolean(window.__GAME_DEBUG__?.getScene().leftFlipper));
   await expect.poll(() => activeScenes(page)).toContain("Game");
+}
+
+async function launchByTouch(page: Page) {
+  await tap(page, UI.rightHalf);
+  await expect.poll(async () => (await runState(page)).status).not.toBe("ready");
 }
 
 test.beforeEach(async ({ page }) => {
@@ -58,7 +36,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto("./");
   await page.locator("canvas").waitFor();
   // Let the Boot and Menu scenes finish creating before the first touch.
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(500);
   touch = await Touchscreen.attach(page);
 });
 
@@ -78,16 +56,35 @@ test("canvas fits the screen with no page scroll", async ({ page }) => {
   await startTableByTouch(page);
 });
 
-test("tapping the table card starts Dragon's Lair", async ({ page }) => {
+test("tapping PLAY starts Dragon's Lair with the ball waiting in the lane", async ({ page }) => {
   await startTableByTouch(page);
   expect(await flippers(page)).toEqual({ left: { pressed: false, raised: false }, right: { pressed: false, raised: false }, status: "ready" });
+  expect(await page.evaluate(() => window.__GAME_DEBUG__.getScene().launchHint.visible), "launch instructions are on screen").toBe(true);
 });
 
-test("holding the left half raises the left flipper and launches the ball", async ({ page }) => {
+test("how to play opens from the title and closes with GOT IT", async ({ page }) => {
+  await tap(page, UI.howTo);
+  await expect.poll(() => activeScenes(page)).toContain("HowTo");
+  await page.waitForTimeout(150);
+  await tap(page, UI.gotIt);
+  await expect.poll(() => activeScenes(page)).toEqual(["Menu"]);
+});
+
+test("touch and hold pulls the plunger, letting go launches", async ({ page }) => {
   await startTableByTouch(page);
-  await down(page, 1, LEFT_HALF);
+  await down(page, 1, UI.leftHalf);
+  await expect.poll(() => page.evaluate(() => window.__GAME_DEBUG__.getScene().charging)).toBe(true);
+  await page.waitForTimeout(500);
+  expect((await runState(page)).status, "still waiting while held").toBe("ready");
+  await touch.up(1);
+  await expect.poll(async () => (await runState(page)).status).not.toBe("ready");
+});
+
+test("holding the left half raises only the left flipper", async ({ page }) => {
+  await startTableByTouch(page);
+  await launchByTouch(page);
+  await down(page, 1, UI.leftHalf);
   await expect.poll(() => flippers(page)).toMatchObject({ left: { pressed: true, raised: true }, right: { pressed: false, raised: false } });
-  expect((await flippers(page)).status).not.toBe("ready");
   await page.waitForTimeout(300);
   expect((await flippers(page)).left, "flipper stays up while the finger is held").toEqual({ pressed: true, raised: true });
   await touch.up(1);
@@ -96,7 +93,8 @@ test("holding the left half raises the left flipper and launches the ball", asyn
 
 test("holding the right half raises only the right flipper", async ({ page }) => {
   await startTableByTouch(page);
-  await down(page, 1, RIGHT_HALF);
+  await launchByTouch(page);
+  await down(page, 1, UI.rightHalf);
   await expect.poll(() => flippers(page)).toMatchObject({ left: { pressed: false, raised: false }, right: { pressed: true, raised: true } });
   await touch.up(1);
   await expect.poll(() => flippers(page)).toMatchObject({ right: { pressed: false, raised: false } });
@@ -104,8 +102,9 @@ test("holding the right half raises only the right flipper", async ({ page }) =>
 
 test("two thumbs hold both flippers independently", async ({ page }) => {
   await startTableByTouch(page);
-  await down(page, 1, LEFT_HALF);
-  await down(page, 2, RIGHT_HALF);
+  await launchByTouch(page);
+  await down(page, 1, UI.leftHalf);
+  await down(page, 2, UI.rightHalf);
   await expect.poll(() => flippers(page)).toMatchObject({ left: { pressed: true, raised: true }, right: { pressed: true, raised: true } });
   await touch.up(1);
   await expect.poll(() => flippers(page)).toMatchObject({ left: { pressed: false, raised: false }, right: { pressed: true, raised: true } });
@@ -115,9 +114,10 @@ test("two thumbs hold both flippers independently", async ({ page }) => {
 
 test("a swipe across the centre releases the flipper it started on and does not scroll", async ({ page }) => {
   await startTableByTouch(page);
-  await down(page, 1, LEFT_HALF);
+  await launchByTouch(page);
+  await down(page, 1, UI.leftHalf);
   await expect.poll(() => flippers(page)).toMatchObject({ left: { pressed: true } });
-  const to = await at(page, { x: RIGHT_HALF.x, y: 300 });
+  const to = await at(page, { x: UI.rightHalf.x, y: 300 });
   await touch.move(1, to.x, to.y, 10);
   expect((await flippers(page)).right.pressed, "sliding into the right half does not press the right flipper").toBe(false);
   await touch.up(1);
@@ -125,54 +125,60 @@ test("a swipe across the centre releases the flipper it started on and does not 
   expect(await page.evaluate(() => [scrollX, scrollY])).toEqual([0, 0]);
 });
 
-test("touch play scores points and the HUD shows them", async ({ page }) => {
+test("touch play scores points and the score display shows them", async ({ page }) => {
+  test.setTimeout(60_000);
   await startTableByTouch(page);
-  await tap(page, RIGHT_HALF);
-  const deadline = Date.now() + 15_000;
+  await launchByTouch(page);
+  const deadline = Date.now() + 40_000;
   let score = 0;
-  // Keep flipping both sides, like a player would, until the ball scores.
   for (let round = 0; Date.now() < deadline && score === 0; round += 1) {
-    await tap(page, round % 2 ? LEFT_HALF : RIGHT_HALF);
+    await tap(page, round % 2 ? UI.leftHalf : UI.rightHalf);
     await page.waitForTimeout(200);
-    score = await page.evaluate(() => window.__GAME_DEBUG__.snapshotState().score);
+    score = (await runState(page)).score;
   }
   expect(score).toBeGreaterThan(0);
-  const hud = await page.evaluate(() => window.__GAME_DEBUG__.getScene().scene.get("UI").scoreLabel.text);
-  expect(hud).toMatch(/^Score: \d+$/);
+  await expect.poll(() => page.evaluate(() => window.__GAME_DEBUG__.getScene().scene.get("UI").displayedScore)).toBeGreaterThan(0);
 });
 
-async function forceGameOver(page: Page) {
-  await page.evaluate(() => {
-    const scene = window.__GAME_DEBUG__.getScene();
-    scene.state.ballsRemaining = 1;
-    scene.state.status = "playing";
-    scene.handleDrain();
-  });
-  await expect.poll(() => activeScenes(page)).toContain("GameOver");
-}
-
-test("on the game over screen a short tap replays the table", async ({ page }) => {
+test("the pause button pauses play and RESUME carries on", async ({ page }) => {
   await startTableByTouch(page);
-  await forceGameOver(page);
+  await launchByTouch(page);
+  await tap(page, UI.pause);
+  await expect.poll(() => page.evaluate(() => window.__GAME_DEBUG__.getScene().scene.isPaused("Game"))).toBe(true);
+  const before = await runState(page);
+  await page.waitForTimeout(300);
+  expect((await runState(page)).elapsedMs, "time stands still while paused").toBe(before.elapsedMs);
+  await tap(page, UI.resume);
+  await expect.poll(() => page.evaluate(() => window.__GAME_DEBUG__.getScene().scene.isPaused("Game"))).toBe(false);
+  expect((await flippers(page)).left.pressed, "the resume tap does not leave a flipper stuck up").toBe(false);
+});
+
+test("touches on the score strip do not flip or launch", async ({ page }) => {
+  await startTableByTouch(page);
+  await tap(page, { x: 200, y: 40 });
   await page.waitForTimeout(200);
-  await tap(page, { x: 300, y: 500 });
+  expect(await flippers(page)).toMatchObject({ left: { pressed: false }, right: { pressed: false }, status: "ready" });
+});
+
+test("game over: PLAY AGAIN replays the table", async ({ page }) => {
+  test.setTimeout(60_000);
+  await startTableByTouch(page);
+  await forceGameOver(page, 4321);
+  await waitForGameOverReady(page);
+  await tap(page, UI.playAgain);
   await expect.poll(() => activeScenes(page)).toContain("Game");
   expect(await activeScenes(page)).not.toContain("GameOver");
+  expect((await runState(page)).score).toBe(0);
 });
 
-test("on the game over screen a long tap returns to table select", async ({ page }) => {
+test("game over: TITLE SCREEN returns to the title with the new high score listed", async ({ page }) => {
+  test.setTimeout(60_000);
   await startTableByTouch(page);
-  await forceGameOver(page);
-  await page.waitForTimeout(200);
-  const p = await at(page, { x: 300, y: 500 });
-  await touch.hold(p.x, p.y, 700);
+  await forceGameOver(page, 4321);
+  await waitForGameOverReady(page);
+  await tap(page, UI.titleScreen);
   await expect.poll(() => activeScenes(page)).toEqual(["Menu"]);
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("rokumon-pinball:save:v1") ?? "{}"));
+  expect(saved.highScores["dragons-lair"]).toBe(4321);
+  expect(saved.topScores["dragons-lair"][0].score).toBe(4321);
 });
-
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    __GAME_DEBUG__: any;
-    __nativeEvents: Record<string, number>;
-  }
-}

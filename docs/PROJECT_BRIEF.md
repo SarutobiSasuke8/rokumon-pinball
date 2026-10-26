@@ -81,12 +81,12 @@ Within the first minute, the player should be able to: launch a ball, control bo
 ## Technical Notes
 
 - Architecture: Boot -> TableSelect -> Table (gameplay) -> GameOver scene flow, matching the profile skeleton.
-- Game engine: Phaser 4 with Matter physics (needed for flipper hinges, bumper restitution, and reliable ball collision at speed — Arcade physics does not model rotating flipper hinges well).
+- Game engine: Phaser 4 for rendering, input and scenes. Since v0.2.0 (2026-10-23) the ball physics is the game's own fixed-step simulation in `src/game/physics.js` (kinematic flippers, capsule walls, 480 Hz step), replacing Matter, whose hinge flippers jittered and let balls slip past.
 - Input model: keyboard keys + on-screen touch zones both mapped to the same left-flipper/right-flipper/plunger actions; must be defined in `Templates/INPUT_CONTROL_MAP.md`.
 - Asset model: procedural/placeholder shapes and colour blocks first per table theme; real art later per table, tracked in `Templates/ASSET_MANIFEST.json`.
 - Save/persistence: localStorage only — per-table high score and which tables are "owned"/unlocked.
 - Observability/logging: none beyond standard dev console; add Games Hub Event API v1 hooks (score, game-over) once embedded, per the pattern in [[Rokumon Games]].
-- Simulation / renderer boundary: Matter physics step decoupled from render via Phaser's fixed timestep; keep flipper/bumper tuning values in `Templates/GAMEPLAY_CONSTANTS.md`.
+- Simulation / renderer boundary: `src/game/physics.js` and `src/game/rules.js` have no Phaser imports and are unit tested in Node; tuning values live in `src/game/constants.js`.
 - Deterministic debug or smoke-test path: needed given physics tunnelling risk — a debug mode that fires the ball at fixed velocity/angle to verify flipper and rail collision without manual play.
 - Asset manifest and fallback policy: tables with no art fall back to a themed colour palette (per fantasy theme) rather than default grey, matching the hub's "art-less catalogue still looks deliberate" rule.
 - Save schema version: v1, table unlock/ownership + high-score map.

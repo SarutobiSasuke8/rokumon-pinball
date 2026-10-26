@@ -1,5 +1,7 @@
 # Gameplay Constants
 
+> **Superseded on 2026-10-23 (v0.2.0).** Matter physics, the hinge constraint and the lane redirect described below were replaced by a custom fixed-step simulation (`src/game/physics.js`, tuning in `src/game/constants.js`, geometry in `src/game/layout.js`). The table below is kept as history. Current values and the reasons for them are in the code comments and are covered by `scripts/test-physics.mjs`.
+
 Keep all player-facing tuning in named groups. Tune through a human playtest, not by intuition alone.
 
 All values live in `src/game/constants.js` — this table explains the *why*; that file is the source of truth for the *what*.

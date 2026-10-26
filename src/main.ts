@@ -1,27 +1,25 @@
 import Phaser from "phaser";
 import { BootScene } from "./scenes/BootScene.js";
 import { MenuScene } from "./scenes/MenuScene.js";
+import { HowToScene } from "./scenes/HowToScene.js";
 import { GameScene } from "./scenes/GameScene.js";
 import { UIScene } from "./scenes/UIScene.js";
 import { GameOverScene } from "./scenes/GameOverScene.js";
-import { GAME, PHYSICS } from "./game/constants.js";
+import { GAME } from "./game/constants.js";
 
+// Physics is the game's own fixed-step simulation (src/game/physics.js), so no
+// Phaser physics plugin is configured.
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: "app",
   width: GAME.width,
   height: GAME.height,
-  backgroundColor: "#0b1020",
-  input: { activePointers: 2 },
-  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  physics: {
-    default: "matter",
-    matter: {
-      gravity: { x: 0, y: PHYSICS.gravity },
-      debug: false,
-    },
-  },
-  scene: [BootScene, MenuScene, GameScene, UIScene, GameOverScene],
+  backgroundColor: "#07040a",
+  input: { activePointers: 3 },
+  // index.html centres the canvas with CSS grid. Phaser's own centring adds a
+  // margin on top of that, which pushed the table off-centre on wide screens.
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.NO_CENTER },
+  scene: [BootScene, MenuScene, GameScene, UIScene, GameOverScene, HowToScene],
 });
 
 // index.html shows a loading line while the bundle downloads; drop it once Phaser is up.

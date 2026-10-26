@@ -25,3 +25,14 @@ node scripts/boot-smoke.mjs --playtest
 ```
 
 `npm test` now builds before its browser boot check, so it works from a fresh checkout. Screenshots are in `tests/evidence/2026-10-15-boot/`. Physics feel, full-run balance, Safari and physical mobile play remain outside this smoke pass.
+
+# Overhaul findings, 23 October 2026 (v0.2.0)
+
+Diagnosis of the 0.1.x build before the overhaul (headless Chromium, `docs/screenshots/2026-10-23-overhaul/before/`):
+
+1. **Balls drained without the player touching them.** There were no inlanes, outlanes or slingshots, so a ball falling outside the flippers went straight to the drain. A logged run drained the first ball about 2 seconds after launch with no flipper contact.
+2. **Flippers jittered.** The Matter hinge plus per-frame angular velocity let the ball push the flippers around: a held flipper swung between 10 and 49 degrees from frame to frame instead of holding its angle.
+3. **No plunger.** Launch was any flipper press at one fixed strength, with a scripted redirect out of the lane.
+4. **Thin presentation.** Flat shapes, no sound, no instructions on the table, the waiting ball sat on the balls counter.
+
+What changed and how it was checked is in `CHANGELOG.md` (0.2.0) and the PR for issue #10. Evidence: `docs/screenshots/2026-10-23-overhaul/after/`, `npm test` (physics fuzz of 400 fast balls, plunge sweep, flipper timing, rules) and `npm run test:mobile` (touch on four phone viewports, keyboard, mouse and hub events on two desktop viewports). A scripted flipping bot kept a ball alive for a median of about 20 seconds against about 4.5 seconds with no flipping, which suggests the flippers matter; it says nothing about how the game feels to a person. Physical-phone feel and Safari remain for the human playtest.
