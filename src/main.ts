@@ -16,7 +16,9 @@ const game = new Phaser.Game({
   height: GAME.height,
   backgroundColor: "#07040a",
   input: { activePointers: 3 },
-  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  // index.html centres the canvas with CSS grid. Phaser's own centring adds a
+  // margin on top of that, which pushed the table off-centre on wide screens.
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.NO_CENTER },
   scene: [BootScene, MenuScene, GameScene, UIScene, GameOverScene, HowToScene],
 });
 

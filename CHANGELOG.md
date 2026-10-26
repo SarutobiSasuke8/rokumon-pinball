@@ -12,6 +12,8 @@ Overhaul after Alexei's playtest (issue #10).
 - Dot-matrix score display, synthesised sound effects with a saved mute setting.
 - Title screen, how-to-play, pause menu (resume, how to play, sound, restart, quit), game over with a top-five high-score list.
 - Tests: physics, rules and save checks in Node; Playwright touch tests on four phone viewports and keyboard, mouse and hub-event tests on two desktop viewports.
+- Layout (2026-10-26): the table is centred on wide screens and landscape phones. index.html and Phaser both centred the canvas, which pushed it off-centre (318 px at 1920 wide).
+- Tests (2026-10-26): `tests/mobile/full-game.spec.ts` plays one complete game with real input only (PLAY, plunger, flipper bot, three natural drains, game-over screen, SDK calls, PLAY AGAIN) on desktop 1280 (mouse and keyboard), Pixel 7 portrait and iPhone 13 landscape (touch). Runs in `npm run test:mobile`.
 
 ## Unreleased
 

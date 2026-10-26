@@ -2,7 +2,9 @@ import { defineConfig, devices } from "@playwright/test";
 
 // Browser tests against the built game (npm run build first): touch on phone
 // viewports (pinball-touch.spec.ts) and keyboard, mouse and hub events on
-// desktop viewports (desktop-keyboard.spec.ts).
+// desktop viewports (desktop-keyboard.spec.ts), plus one complete real-input
+// game to game over and a restart (full-game.spec.ts) on desktop 1280, Pixel 7
+// portrait and iPhone 13 landscape.
 // Every project runs in Chromium, including the iPhone 13 ones: the device
 // descriptor gives the iPhone viewport, pixel ratio, user agent and touch
 // support, but the engine is Chromium, not Safari/WebKit. Chromium is used
@@ -33,10 +35,10 @@ export default defineConfig({
   },
   projects: [
     { name: "iphone-13-portrait", testMatch: /pinball-touch/, use: { ...devices["iPhone 13"], ...chromium } },
-    { name: "iphone-13-landscape", testMatch: /pinball-touch/, use: { ...devices["iPhone 13 landscape"], ...chromium } },
-    { name: "pixel-7-portrait", testMatch: /pinball-touch/, use: { ...devices["Pixel 7"], ...chromium } },
+    { name: "iphone-13-landscape", testMatch: /pinball-touch|full-game/, use: { ...devices["iPhone 13 landscape"], ...chromium } },
+    { name: "pixel-7-portrait", testMatch: /pinball-touch|full-game/, use: { ...devices["Pixel 7"], ...chromium } },
     { name: "pixel-7-landscape", testMatch: /pinball-touch/, use: { ...devices["Pixel 7 landscape"], ...chromium } },
-    { name: "desktop-1280", testMatch: /desktop-keyboard/, use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 }, ...chromium } },
+    { name: "desktop-1280", testMatch: /desktop-keyboard|full-game/, use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 }, ...chromium } },
     { name: "desktop-1920", testMatch: /desktop-keyboard/, use: { ...devices["Desktop Chrome"], viewport: { width: 1920, height: 1080 }, ...chromium } },
   ],
 });
